@@ -1,122 +1,57 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
+import './assets/styles.css'
+import StorePage from './pages/StorePage'
+import LoginPage from './pages/LoginPage'
+import HomePage from './pages/HomePage'
+import ProductosPage from './pages/ProductosPage'
+import PedidosPage from './pages/PedidosPage'
+import VentasPage from './pages/VentasPage'
+import RegistroProductoPage from './pages/RegistroProductoPage'
+import RegistroPedidoPage from './pages/RegistroPedidoPage'
+import RegistroVentaPage from './pages/RegistroVentaPage'
+
+const pageRoutes = {
+  '/': StorePage,
+  '/login': LoginPage,
+  '/home': HomePage,
+  '/productos': ProductosPage,
+  '/pedidos': PedidosPage,
+  '/ventas': VentasPage,
+  '/registro-producto': RegistroProductoPage,
+  '/registro-pedido': RegistroPedidoPage,
+  '/registro-venta': RegistroVentaPage,
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const getCurrentPath = () => window.location.pathname.replace(/\.html$/, '') || '/'
+  const [path, setPath] = useState(getCurrentPath)
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+  useEffect(() => {
+    const updatePage = () => setPath(getCurrentPath())
 
-      <div className="ticks"></div>
+    const navigateToLink = event => {
+      const link = event.target.closest('a')
+      const isInternalLink = link && link.origin === window.location.origin
+      const hasKnownPage = link && pageRoutes[link.pathname]
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      if (!isInternalLink || link.hash || !hasKnownPage) return
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      event.preventDefault()
+      window.history.pushState({}, '', link.pathname)
+      setPath(link.pathname)
+    }
+
+    window.addEventListener('popstate', updatePage)
+    document.addEventListener('click', navigateToLink)
+
+    return () => {
+      window.removeEventListener('popstate', updatePage)
+      document.removeEventListener('click', navigateToLink)
+    }
+  }, [])
+
+  const Page = pageRoutes[path] || StorePage
+  return <Page />
 }
 
 export default App
