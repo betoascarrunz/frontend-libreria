@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react'
 import { Footer, Header, Link } from '../components/Layout'
+import { getUser } from '../api/auth'
+import { getTotales, getUltimasVentas, getUltimosPedidos } from '../api/dashboard'
 
 const summaries = [
   ['◷', 'Productos', '2', '/productos', 'Ver productos'],
@@ -6,17 +9,9 @@ const summaries = [
   ['♡', 'Registro de Pedidos', '6', '/pedidos', 'Ver pedidos'],
 ]
 
-const recentSales = [
-  ['#AN-2026-024', '28 de agosto de 2026', 'Efectivo', 'Bs. 185.00', 'estado-preparando'],
-  ['#AN-2026-018', '20 de agosto de 2026', 'QR', 'Bs. 320.50', 'estado-enviado'],
-]
+const user = getUser()
 
-const recentPurchases = [
-  ['mini-portada-verde', 'Cuaderno', 'Cuaderno espiral', 'Artesanal', 'Bs. 45.00'],
-  ['mini-portada-coral', 'Bolígrafos', 'Set de bolígrafos', 'Sabonis', 'Bs. 28.50'],
-]
-
-function SummaryCard({ summary, featured }) {
+function TotalesCard({ summary, featured }) {
   const [icon, label, value, href, action] = summary
 
   return (
@@ -33,7 +28,8 @@ function SummaryCard({ summary, featured }) {
   )
 }
 
-function RecentSales() {
+function UltimasVentas({ ventas }) {
+  //console.log('ventas', ventas)
   return (
     <section className="panel-dashboard">
       <div className="encabezado-panel">
@@ -44,14 +40,15 @@ function RecentSales() {
         <Link className="enlace-texto" href="/ventas">Ver todos</Link>
       </div>
 
-      {recentSales.map(([number, date, payment, total, status]) => (
-        <div className="pedido" key={number}>
+      {ventas.map((venta) => (
+        <div className="pedido" key={venta.id}>
           <div>
-            <strong>{number}</strong>
-            <p>Realizado el {date}</p>
+            <strong>{venta.id} - {venta.producto.nombre}</strong>
+            <p>Realizado el {venta.fecha}</p>
           </div>
-          <span className={`estado ${status}`}>{payment}</span>
-          <strong>{total}</strong>
+
+          <span className={`estado-enviado`}>{venta.metodo_pago}</span>
+          <strong>{venta.total}</strong>
         </div>
       ))}
     </section>
@@ -59,34 +56,39 @@ function RecentSales() {
 }
 
 function UserProfile() {
+  
   return (
     <aside className="panel-dashboard panel-perfil">
-      <div className="avatar-usuario">R</div>
+      <div className="avatar-usuario">{user?.name?.charAt(0) || ''}</div>
       <p className="etiqueta">Mi cuenta</p>
-      <h2>Roberto Ascarrunz</h2>
-      <p className="correo-usuario">roberto.ascarrunz@email.com</p>
-      <a className="boton" href="mailto:hola@analy.test">Editar perfil</a>
+      <h2>{user?.name || 'S/N'}</h2>
+      <p className="correo-usuario">{user?.email || 'S/E'}</p>
+    
     </aside>
   )
 }
 
-function RecentPurchases() {
+function UltimosPedidos({ pedidos }) {
   return (
     <section className="panel-dashboard">
       <div className="encabezado-panel">
-        <h2>Últimas compras</h2>
-        <Link className="enlace-texto" href="/#catalogo">Ver catálogo</Link>
+        <h2>Últimos pedidos</h2>
+        <Link className="enlace-texto" href="/pedidos">Ver todos</Link>
       </div>
 
       <div className="favoritos-lista">
-        {recentPurchases.map(([cover, coverText, name, brand, price]) => (
-          <div className="favorito-item" key={name}>
-            <span className={`mini-portada ${cover}`}>{coverText}</span>
+        {pedidos.map(pedido => (
+          <div className="favorito-item" key={pedido.id}>
+            <span>{pedido.cantidad}</span>
             <div>
-              <strong>{name}</strong>
-              <p>{brand}</p>
+              <strong>{pedido.prioridad}</strong>
+              <p>{pedido.estado}</p>
             </div>
-            <span className="precio">{price}</span>
+            <div>
+              <span className="precio">{pedido.producto.nombre}</span>
+              <p className="fecha">{pedido.nombre_cliente}</p>
+            </div>
+            
           </div>
         ))}
       </div>
@@ -95,6 +97,39 @@ function RecentPurchases() {
 }
 
 export default function HomePage() {
+  const [totales, setTotales] = useState([])
+  const [ultimosPedidos, setUltimosPedidos] = useState([])
+  const [ultimasVentas, setUltimasVentas] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState('')
+   const [busqueda, setBusqueda] = useState('')
+
+    useEffect(() => {
+        getTotales()
+            .then(response => setTotales(response || []))
+            .catch(apiError => setError(apiError.message))
+            .finally(() => setCargando(false))
+    }, [])
+    //console.log('totales productos', totales )
+    summaries[0][2] = totales?.total_productos || '0'
+    summaries[1][2] = totales?.total_ventas || '0'
+    summaries[2][2] = totales?.total_pedidos || '0'
+
+    useEffect(() => {
+        getUltimosPedidos()
+            .then(response => setUltimosPedidos(Array.isArray(response) ? response : response?.data?.data || response?.data || []))
+            .catch(apiError => setError(apiError.message))
+            .finally(() => setCargando(false))
+    }, [])
+
+    useEffect(() => {
+        getUltimasVentas()
+            .then(response => setUltimasVentas(Array.isArray(response) ? response : response?.data?.data || response?.data || []))
+            .catch(apiError => setError(apiError.message))
+            .finally(() => setCargando(false))
+    }, [])
+    
+    //console.log('ultimas ventas', ultimasVentas )
   return (
     <div className="pagina-dashboard">
       <Header active="panel" />
@@ -104,21 +139,21 @@ export default function HomePage() {
           <section className="bienvenida-dashboard">
             <div>
               <p className="etiqueta">Panel personal</p>
-              <h1>Hola, Roberto.</h1>
+              <h1>Hola, {user?.name || 'S/N'}.</h1>
               <p>Este es el resumen de tu actividad en Analy's Librería.</p>
             </div>
           </section>
 
           <section className="resumen-dashboard">
             {summaries.map((summary, index) => (
-              <SummaryCard key={summary[1]} summary={summary} featured={index === 0} />
+              <TotalesCard key={summary[1]} summary={summary} featured={index === 0} />
             ))}
           </section>
 
           <div className="rejilla-dashboard">
-            <RecentSales />
+            <UltimasVentas ventas={ultimasVentas} />
             <UserProfile />
-            <RecentPurchases />
+            <UltimosPedidos pedidos={ultimosPedidos} />
           </div>
         </div>
       </main>

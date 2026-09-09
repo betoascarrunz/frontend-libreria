@@ -1,3 +1,6 @@
+import { clearAuth } from '../api/auth'
+import { goTo } from './navigation'
+
 export function Link({ href, children, ...props }) {
   return <a href={href} {...props}>{children}</a>
 }
@@ -29,6 +32,11 @@ function Brand({ href }) {
 export function Header({ active = '', publicSite = false }) {
   const links = publicSite ? publicLinks : privateLinks
   const homePath = publicSite ? '/' : '/home'
+  const handleLogout = event => {
+    event.preventDefault()
+    clearAuth()
+    goTo('/login')
+  }
 
   return (
     <header className="encabezado-sitio">
@@ -50,6 +58,7 @@ export function Header({ active = '', publicSite = false }) {
         <Link
           className={`enlace-login ${active === 'login' ? 'activo' : ''}`}
           href="/login"
+          onClick={publicSite ? undefined : handleLogout}
         >
           {publicSite ? 'Inicia Sesión' : 'Cerrar sesión'}
         </Link>
@@ -82,7 +91,7 @@ export function Footer({ publicSite = false }) {
         <p className="derechos">© 2026 Analy's Librería. Todos los derechos reservados.</p>
 
         {!publicSite && (
-          <Link className="enlace-texto" href="/">
+          <Link className="enlace-texto" href="/home">
             Volver a la tienda
           </Link>
         )}
