@@ -1,3 +1,5 @@
+import { getAuthHeaders } from './auth'
+
 const API_URL = 'http://127.0.0.1:8000/api/productos'
 
 async function request(url, options = {}) {
@@ -5,6 +7,7 @@ async function request(url, options = {}) {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
       ...options.headers,
     },
     ...options,

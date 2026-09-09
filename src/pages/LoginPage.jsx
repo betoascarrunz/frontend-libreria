@@ -1,27 +1,61 @@
+import { useState } from 'react'
+import { login } from '../api/auth'
 import { Footer, Header } from '../components/Layout'
 import { goTo } from '../components/navigation'
 
 function LoginForm() {
-  const handleSubmit = event => {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [remember, setRemember] = useState(true)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async event => {
     event.preventDefault()
-    goTo('/home')
+    setError('')
+    setLoading(true)
+
+    try {
+      await login(email, password, remember)
+      goTo('/home')
+    } catch (loginError) {
+      setError(loginError.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <form className="formulario-login" onSubmit={handleSubmit}>
       <div className="grupo-campo">
         <label htmlFor="correo">Correo electrónico</label>
-        <input type="email" id="correo" required />
+        <input
+          type="email"
+          id="correo"
+          value={email}
+          onChange={event => setEmail(event.target.value)}
+          required
+        />
       </div>
 
       <div className="grupo-campo">
         <label htmlFor="contrasena">Contraseña</label>
-        <input type="password" id="contrasena" required />
+        <input
+          type="password"
+          id="contrasena"
+          value={password}
+          onChange={event => setPassword(event.target.value)}
+          required
+        />
       </div>
 
       <div className="opciones-login">
         <label className="recordarme">
-          <input type="checkbox" />
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={event => setRemember(event.target.checked)}
+          />
           <span>Recordarme</span>
         </label>
         <a href="mailto:hola@analy.test?subject=Recuperar%20contraseña">
@@ -29,7 +63,10 @@ function LoginForm() {
         </a>
       </div>
 
-      <button className="boton boton-login" type="submit">Entrar</button>
+      {error && <p className="error-formulario" role="alert">{error}</p>}
+      <button className="boton boton-login" type="submit" disabled={loading}>
+        {loading ? 'Entrando...' : 'Entrar'}
+      </button>
     </form>
   )
 }

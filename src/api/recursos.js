@@ -1,3 +1,5 @@
+import { getAuthHeaders } from './auth'
+
 const API_URLS = {
   pedidos: 'http://127.0.0.1:8000/api/pedidos',
   ventas: 'http://127.0.0.1:8000/api/ventas',
@@ -8,6 +10,7 @@ async function request(url, options = {}) {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
       ...options.headers,
     },
     ...options,
