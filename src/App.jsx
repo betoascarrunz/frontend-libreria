@@ -9,6 +9,8 @@ import VentasPage from './pages/VentasPage'
 import RegistroProductoPage from './pages/RegistroProductoPage'
 import RegistroPedidoPage from './pages/RegistroPedidoPage'
 import RegistroVentaPage from './pages/RegistroVentaPage'
+import { getToken } from './api/auth'
+import { goTo } from './components/navigation'
 
 const pageRoutes = {
   '/': StorePage,
@@ -21,6 +23,8 @@ const pageRoutes = {
   '/registro-pedido': RegistroPedidoPage,
   '/registro-venta': RegistroVentaPage,
 }
+
+const privatePaths = new Set(Object.keys(pageRoutes).filter(path => path !== '/' && path !== '/login'))
 
 function App() {
   const getCurrentPath = () => window.location.pathname.replace(/\.html$/, '') || '/'
@@ -49,6 +53,10 @@ function App() {
       document.removeEventListener('click', navigateToLink)
     }
   }, [])
+
+  useEffect(() => {
+    if (privatePaths.has(path) && !getToken()) goTo('/login')
+  }, [path])
 
   const Page = pageRoutes[path] || StorePage
   return <Page />
